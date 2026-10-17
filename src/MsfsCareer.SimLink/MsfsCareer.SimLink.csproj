@@ -1,0 +1,36 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <!--
+    Talks to MSFS through the managed SimConnect API from the MSFS SDK.
+    The SDK can't be redistributed in this repo, so the build looks for it through the
+    MSFS2024_SDK environment variable (set by the MSFS 2024 SDK installer), or MSFS_SDK for the 2020 SDK.
+    Without the SDK (e.g. on Linux CI) this project builds empty and the CLI runs in replay-only mode.
+  -->
+  <PropertyGroup>
+    <TargetFramework>net8.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <PlatformTarget>x64</PlatformTarget>
+    <MsfsSdk Condition="'$(MsfsSdk)' == ''">$(MSFS2024_SDK)</MsfsSdk>
+    <MsfsSdk Condition="'$(MsfsSdk)' == ''">$(MSFS_SDK)</MsfsSdk>
+    <SimConnectManagedDll>$(MsfsSdk)\SimConnect SDK\lib\managed\Microsoft.FlightSimulator.SimConnect.dll</SimConnectManagedDll>
+    <SimConnectNativeDll>$(MsfsSdk)\SimConnect SDK\lib\SimConnect.dll</SimConnectNativeDll>
+    <HasSimConnect Condition="'$(MsfsSdk)' != '' And Exists('$(SimConnectManagedDll)')">true</HasSimConnect>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\MsfsCareer.Core\MsfsCareer.Core.csproj" />
+  </ItemGroup>
+
+  <ItemGroup Condition="'$(HasSimConnect)' == 'true'">
+    <Reference Include="Microsoft.FlightSimulator.SimConnect">
+      <HintPath>$(SimConnectManagedDll)</HintPath>
+    </Reference>
+    <None Include="$(SimConnectNativeDll)" Link="SimConnect.dll" CopyToOutputDirectory="PreserveNewest" />
+  </ItemGroup>
+
+  <ItemGroup Condition="'$(HasSimConnect)' != 'true'">
+    <Compile Remove="**\*.cs" />
+  </ItemGroup>
+
+</Project>

@@ -1,0 +1,19 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: 8.0.x
+      # The MSFS SDK isn't available here, so SimLink builds empty and only replay is tested.
+      - run: dotnet build --configuration Release
+      - run: dotnet test --configuration Release --no-build
+      - run: dotnet run --project src/MsfsCareer.Cli --configuration Release --no-build -- replay samples/local-circuit.jsonl
